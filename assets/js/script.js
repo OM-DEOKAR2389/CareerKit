@@ -1,7 +1,7 @@
 // Update these two values before publishing. Use the full international number
 // for WhatsApp (digits only, including country code) and your confirmed UPI ID.
-const WHATSAPP_NUMBER = "91XXXXXXXXXX";
-const UPI_ID = "yourupi@bank";
+const WHATSAPP_NUMBER = "919096803246";
+const UPI_ID = "omdeokar2389@ybl";
 
 const products = [
   {id:"basic-fresher-resume",name:"Basic Fresher Resume",category:"resume",price:49,description:"A clean, easy-to-edit resume starting point for students and fresh graduates applying for their first opportunities.",includes:["Simple, professional structure","Sections for education, skills and projects","Beginner-friendly editing guidance"],icon:"bi-file-earmark-person"},
