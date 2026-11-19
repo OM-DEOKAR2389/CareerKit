@@ -24,8 +24,8 @@ const searchInput = document.getElementById("productSearch");
 const emptyState = document.getElementById("emptyState");
 
 function whatsappUrl(product) {
-  const number = WHATSAPP_NUMBER.replace(/\D/g, "");
-  if (!number || number.includes("XXXXXXXXXX")) return "";
+  const number = String(WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  if (!number || /x/i.test(WHATSAPP_NUMBER) || number.length < 8 || number.length > 15) return "";
   const message = `Hi CareerKit, I would like to order ${product.name} (${formatPrice(product.price)}). Please share the current payment details and confirm the ordering steps. I understand delivery is manual after payment verification.`;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
@@ -40,9 +40,8 @@ function productCard(product) {
 }
 
 function orderButton(product, context) {
-  const url = whatsappUrl(product);
-  if (!url) return `<button class="btn btn-primary btn-order" type="button" disabled title="WhatsApp ordering will be available after configuration">Configure WhatsApp</button>`;
-  return `<a class="btn btn-primary btn-order" href="${url}" target="_blank" rel="noopener noreferrer" aria-label="Order ${product.name} on WhatsApp"><i class="bi bi-whatsapp ${context === "card" ? "me-1" : "me-2"}" aria-hidden="true"></i>${context === "card" ? "Order" : "Order on WhatsApp"}</a>`;
+  const buttonClass = context === "modal" ? "btn btn-primary w-100" : "btn btn-primary btn-order";
+  return `<button class="${buttonClass}" type="button" data-order="${product.id}" aria-label="Order ${product.name} on WhatsApp"><i class="bi bi-whatsapp ${context === "card" ? "me-1" : "me-2"}" aria-hidden="true"></i>${context === "card" ? "Order" : "Order on WhatsApp"}</button>`;
 }
 
 function renderProducts() {
@@ -62,7 +61,9 @@ function showProductDetails(id) {
   document.getElementById("modalProductDescription").textContent = product.description;
   document.getElementById("modalProductIncludes").innerHTML = product.includes.map(item => `<li>${item}</li>`).join("");
   document.getElementById("modalProductPrice").textContent = formatPrice(product.price);
-  document.getElementById("modalOrderButton").outerHTML = orderButton(product, "modal").replace('class="btn btn-primary btn-order"','id="modalOrderButton" class="btn btn-primary w-100"');
+  const modalOrderButton = document.getElementById("modalOrderButton");
+  modalOrderButton.dataset.order = product.id;
+  modalOrderButton.setAttribute("aria-label", `Order ${product.name} on WhatsApp`);
   bootstrap.Modal.getOrCreateInstance(document.getElementById("productModal")).show();
 }
 
@@ -85,9 +86,23 @@ document.getElementById("clearFilters").addEventListener("click", () => {
   renderProducts(); searchInput.focus();
 });
 
-grid.addEventListener("click", event => {
-  const button = event.target.closest("[data-details]");
-  if (button) showProductDetails(button.dataset.details);
+document.addEventListener("click", event => {
+  const orderButton = event.target.closest("[data-order]");
+  if (orderButton) {
+    event.preventDefault();
+    const product = products.find(item => item.id === orderButton.dataset.order);
+    if (!product) return;
+    const url = whatsappUrl(product);
+    if (!url) {
+      window.alert("WhatsApp ordering is not configured yet. Please add a valid WhatsApp number with country code in assets/js/script.js.");
+      return;
+    }
+    window.location.assign(url);
+    return;
+  }
+
+  const detailsButton = event.target.closest("[data-details]");
+  if (detailsButton) showProductDetails(detailsButton.dataset.details);
 });
 
 document.getElementById("currentYear").textContent = new Date().getFullYear();
