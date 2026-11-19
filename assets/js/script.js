@@ -2,6 +2,9 @@
 // for WhatsApp (digits only, including country code) and your confirmed UPI ID.
 const WHATSAPP_NUMBER = "919096803246";
 const UPI_ID = "omdeokar2389@ybl";
+// Set these customer-facing terms after confirming your current business policy.
+const DELIVERY_TIME = "Confirm the expected delivery timing with CareerKit before paying.";
+const REFUND_POLICY = "Please confirm the current refund terms with CareerKit before paying.";
 
 const products = [
   {id:"basic-fresher-resume",name:"Basic Fresher Resume",category:"resume",price:49,description:"A clean, easy-to-edit resume starting point for students and fresh graduates applying for their first opportunities.",includes:["Simple, professional structure","Sections for education, skills and projects","Beginner-friendly editing guidance"],icon:"bi-file-earmark-person"},
@@ -30,18 +33,18 @@ function whatsappUrl(product) {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
-function formatPrice(price) { return `₹${price}`; }
+function formatPrice(price) { return `\u20B9${price}`; }
 
 function productCard(product) {
   return `<div class="col-sm-6 col-lg-4 col-xl-3"><article class="product-card">
-    <div class="product-visual visual-${product.category}"><span class="visual-pattern" aria-hidden="true"></span><span class="product-category">${categoryNames[product.category]}</span><div class="visual-illustration" aria-hidden="true"><i class="ill-icon bi ${product.icon}"></i><i></i><i></i><i></i></div></div>
-    <div class="product-body"><h3>${product.name}</h3><p>${product.description}</p><div class="product-card-footer"><span class="product-price">${formatPrice(product.price)} <small>one-time</small></span><div class="card-actions"><button class="btn btn-details" type="button" data-details="${product.id}" aria-label="View details for ${product.name}">Details</button>${orderButton(product,"card")}</div></div></div>
+    <div class="product-visual visual-${product.category}" role="img" aria-label="Illustrated preview for ${product.name}"><span class="visual-pattern" aria-hidden="true"></span><span class="product-category">${categoryNames[product.category]}</span><div class="visual-illustration" aria-hidden="true"><i class="ill-icon bi ${product.icon}"></i><i></i><i></i><i></i></div></div>
+    <div class="product-body"><h3>${product.name}</h3><p>${product.description}</p><div class="product-includes-preview"><strong>What’s included</strong><ul>${product.includes.slice(0,2).map(item => `<li>${item}</li>`).join("")}</ul></div><div class="product-card-footer"><span class="product-price">${formatPrice(product.price)} <small>one-time</small></span><div class="card-actions"><button class="btn btn-details" type="button" data-details="${product.id}" aria-label="View details for ${product.name}">Details</button>${orderButton(product,"card")}</div></div></div>
   </article></div>`;
 }
 
 function orderButton(product, context) {
   const buttonClass = context === "modal" ? "btn btn-primary w-100" : "btn btn-primary btn-order";
-  return `<button class="${buttonClass}" type="button" data-order="${product.id}" aria-label="Order ${product.name} on WhatsApp"><i class="bi bi-whatsapp ${context === "card" ? "me-1" : "me-2"}" aria-hidden="true"></i>${context === "card" ? "Order" : "Order on WhatsApp"}</button>`;
+  return `<button class="${buttonClass}" type="button" data-order="${product.id}" aria-label="Order ${product.name} on WhatsApp"><i class="bi bi-whatsapp ${context === "card" ? "me-1" : "me-2"}" aria-hidden="true"></i>Order on WhatsApp</button>`;
 }
 
 function renderProducts() {
@@ -55,11 +58,15 @@ function renderProducts() {
 function showProductDetails(id) {
   const product = products.find(item => item.id === id);
   if (!product) return;
-  document.getElementById("modalProductIcon").innerHTML = `<i class="bi ${product.icon}"></i>`;
+  const modalPreview = document.getElementById("modalProductPreview");
+  modalPreview.className = `modal-product-preview visual-${product.category}`;
+  modalPreview.innerHTML = `<div class="visual-illustration" role="img" aria-label="Illustrated preview for ${product.name}"><i class="ill-icon bi ${product.icon}" aria-hidden="true"></i><i></i><i></i><i></i></div>`;
   document.getElementById("modalProductCategory").textContent = categoryNames[product.category];
   document.getElementById("productModalTitle").textContent = product.name;
   document.getElementById("modalProductDescription").textContent = product.description;
   document.getElementById("modalProductIncludes").innerHTML = product.includes.map(item => `<li>${item}</li>`).join("");
+  document.getElementById("modalProductAudience").textContent = product.category === "resume" ? "Students and fresh graduates preparing a resume." : product.category === "interview" ? "Learners preparing for entry-level interviews." : "Students and learners studying programming concepts.";
+  document.getElementById("modalProductFormat").textContent = "Confirm available file formats and editing options with us before ordering.";
   document.getElementById("modalProductPrice").textContent = formatPrice(product.price);
   const modalOrderButton = document.getElementById("modalOrderButton");
   modalOrderButton.dataset.order = product.id;
@@ -102,8 +109,32 @@ document.addEventListener("click", event => {
   }
 
   const detailsButton = event.target.closest("[data-details]");
-  if (detailsButton) showProductDetails(detailsButton.dataset.details);
+  if (detailsButton) {
+    showProductDetails(detailsButton.dataset.details);
+    return;
+  }
+
+  const contactButton = event.target.closest("[data-contact-whatsapp]");
+  if (contactButton) {
+    const number = String(WHATSAPP_NUMBER || "").replace(/\D/g, "");
+    if (!number || /x/i.test(String(WHATSAPP_NUMBER)) || number.length < 8 || number.length > 15) {
+      window.alert("WhatsApp contact is not configured yet. Add a valid WhatsApp number with country code in assets/js/script.js.");
+      return;
+    }
+    const message = "Hi CareerKit, I have a question about your resources.";
+    window.location.assign(`https://wa.me/${number}?text=${encodeURIComponent(message)}`);
+    return;
+  }
+
+  const navLink = event.target.closest("#mainNav .nav-link");
+  const navCollapse = document.getElementById("mainNav");
+  if (navLink && navCollapse.classList.contains("show")) {
+    bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
+  }
 });
 
 document.getElementById("currentYear").textContent = new Date().getFullYear();
+document.getElementById("deliveryPolicyText").textContent = DELIVERY_TIME;
+document.getElementById("refundPolicyText").textContent = REFUND_POLICY;
+document.getElementById("refundFaqAnswer").textContent = REFUND_POLICY;
 renderProducts();

@@ -17,9 +17,13 @@ Open `assets/js/script.js` and update the two configuration constants at the top
 ```js
 const WHATSAPP_NUMBER = "91XXXXXXXXXX";
 const UPI_ID = "yourupi@bank";
+const DELIVERY_TIME = "Confirm delivery timing before paying.";
+const REFUND_POLICY = "Confirm refund terms before paying.";
 ```
 
 Replace the WhatsApp placeholder with your full international phone number using digits only (country code included). Replace the UPI placeholder with your verified UPI ID. Confirm your payment details with customers in WhatsApp before they pay. The UPI ID is a configuration value for your ordering workflow; the site does not initiate payments or verify them. Product delivery is manual after payment verification. No paid download links are exposed.
+
+Edit `DELIVERY_TIME` and `REFUND_POLICY` in the same file to publish the current customer-facing delivery and refund terms. These values are shown on the site; confirm the wording reflects your actual policy before publishing.
 
 ## Customize products
 
