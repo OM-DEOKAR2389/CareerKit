@@ -25,6 +25,41 @@ let activeCategory = "all";
 const grid = document.getElementById("productGrid");
 const searchInput = document.getElementById("productSearch");
 const emptyState = document.getElementById("emptyState");
+let revealObserver = null;
+
+function observeRevealTargets() {
+  if (!revealObserver) return;
+  document.querySelectorAll("[data-reveal]:not(.is-visible)").forEach(element => revealObserver.observe(element));
+}
+
+function initializeMotion() {
+  const prefersReducedMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion || typeof IntersectionObserver !== "function") return;
+
+  try {
+    revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.08, rootMargin: "0px 0px -32px 0px" });
+
+    const navSentinel = document.getElementById("navSentinel");
+    if (navSentinel) {
+      const navObserver = new IntersectionObserver(([entry]) => {
+        document.querySelector(".site-nav")?.classList.toggle("is-scrolled", !entry.isIntersecting);
+      }, { threshold: 0 });
+      navObserver.observe(navSentinel);
+    }
+
+    observeRevealTargets();
+    document.documentElement.classList.add("motion-ready");
+  } catch (error) {
+    revealObserver = null;
+    document.documentElement.classList.remove("motion-ready");
+  }
+}
 
 function whatsappUrl(product) {
   const number = String(WHATSAPP_NUMBER || "").replace(/\D/g, "");
@@ -35,8 +70,8 @@ function whatsappUrl(product) {
 
 function formatPrice(price) { return `\u20B9${price}`; }
 
-function productCard(product) {
-  return `<div class="col-sm-6 col-lg-4 col-xl-3"><article class="product-card">
+function productCard(product, index) {
+  return `<div class="col-sm-6 col-lg-4 col-xl-3" data-reveal data-reveal-delay="${index % 4}"><article class="product-card">
     <div class="product-visual visual-${product.category}" role="img" aria-label="Illustrated preview for ${product.name}"><span class="visual-pattern" aria-hidden="true"></span><span class="product-category">${categoryNames[product.category]}</span><div class="visual-illustration" aria-hidden="true"><i class="ill-icon bi ${product.icon}"></i><i></i><i></i><i></i></div></div>
     <div class="product-body"><h3>${product.name}</h3><p>${product.description}</p><div class="product-includes-preview"><strong>What’s included</strong><ul>${product.includes.slice(0,2).map(item => `<li>${item}</li>`).join("")}</ul></div><div class="product-card-footer"><span class="product-price">${formatPrice(product.price)} <small>one-time</small></span><div class="card-actions"><button class="btn btn-details" type="button" data-details="${product.id}" aria-label="View details for ${product.name}">Details</button>${orderButton(product,"card")}</div></div></div>
   </article></div>`;
@@ -53,6 +88,7 @@ function renderProducts() {
   grid.innerHTML = matches.map(productCard).join("");
   emptyState.classList.toggle("d-none", matches.length !== 0);
   document.getElementById("productCount").textContent = `${matches.length} ${matches.length === 1 ? "resource" : "resources"}`;
+  observeRevealTargets();
 }
 
 function showProductDetails(id) {
@@ -137,4 +173,5 @@ document.getElementById("currentYear").textContent = new Date().getFullYear();
 document.getElementById("deliveryPolicyText").textContent = DELIVERY_TIME;
 document.getElementById("refundPolicyText").textContent = REFUND_POLICY;
 document.getElementById("refundFaqAnswer").textContent = REFUND_POLICY;
+initializeMotion();
 renderProducts();
